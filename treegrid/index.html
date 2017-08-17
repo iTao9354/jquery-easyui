@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="../plugins/jquery-easyui-1.5.1/themes/default/easyui.css">
+        <link rel="stylesheet" href="../plugins/jquery-easyui-1.5.1/themes/icon.css">
+    </head>
+    <body>
+		<div>
+			<!-- 表格区域 -->
+			<table id="tg" class="easyui-treegrid" style="width:700px;height:250px"></table> 
+			<!-- 右键菜单 -->
+			<ul id="mm" class="easyui-menu" style="width:120px;">
+	          	<div onclick="append()" data-options="iconCls:'icon-add'">Append</div>
+				<div onclick="removeIt()" data-options="iconCls:'icon-remove'">Remove</div>
+				<div class="menu-sep"></div>
+				<div onclick="collapse()">Collapse</div>
+				<div onclick="expand()">Expand</div>
+			</ul>
+		</div>
+		
+    	<script src="../plugins/jquery-easyui-1.5.1/jquery.min.js"></script>
+    	<script src="../plugins/jquery-easyui-1.5.1/jquery.easyui.min.js"></script>
+    	<script>
+    		$(function() {
+    			initTreeGrid();
+    		})
+
+    		var treeData = {
+					"total":7,
+					"rows":[
+					        {"id":1,"name":"All Tasks","begin":"3/4/2010","end":"3/20/2010","progress":60,"iconCls":"icon-ok"},
+			                {"id":2,"name":"Designing","begin":"3/4/2010","end":"3/10/2010","progress":100,"_parentId":1,"state":"closed"},
+			                {"id":21,"name":"Database","persons":2,"begin":"3/4/2010","end":"3/6/2010","progress":100,"_parentId":2},
+			                {"id":22,"name":"UML","persons":1,"begin":"3/7/2010","end":"3/8/2010","progress":100,"_parentId":2},
+			                {"id":23,"name":"Export Document","persons":1,"begin":"3/9/2010","end":"3/10/2010","progress":100,"_parentId":2},
+			                {"id":3,"name":"Coding","persons":2,"begin":"3/11/2010","end":"3/18/2010","progress":80},
+			                {"id":4,"name":"Testing","persons":1,"begin":"3/19/2010","end":"3/20/2010","progress":20}
+			         ],
+			         "footer":[
+			                {"name":"Total Persons:","persons":7,"iconCls":"icon-sum"}
+			         ]
+			};
+
+
+			function initTreeGrid() {
+				// 加载页面是执行方法，初始化表格
+				$('#tg').treegrid({
+			//		url : webpath+'/resources/camel/js/treeData?json',
+					data: treeData,    // 假数据
+					idField : 'id',
+					treeField : 'name',
+					iconCls: 'icon-ok',
+					rownumbers: true,
+					animate: true,
+					collapsible: true,
+					fitColumns : true,// 自适应列宽
+					fit : true,// 自适应宽高
+					striped:true,
+					toolbar : [ {    // 工具栏
+						text : '<a href="javascript:;"><i class="fa fa-plus"></i><span>新增</span></a>',
+						handler : function() {
+							console.log('新增');
+						}
+					}, "-", {
+						text : '<a href="javascript:;"><i class="fa fa-refresh"></i><span>刷新</span></a>',
+						handler : function() {
+							console.log('刷新');
+							$("#tg").treegrid("reload");
+						}
+					} ],
+					columns : [ [
+							{
+								title : 'Task Name',
+								field : 'name',
+								halign : 'center',
+								align : 'left',
+								width : '20%',
+								sortable : true     // 排序
+							},
+							{
+								title : 'Persons',
+								field : 'persons',
+								halign : 'center',
+								align : 'left',
+								width : '20%'
+							},
+							{
+								title : 'Begin Date',
+								field : 'begin',
+								halign : 'center',
+								width : '20%',
+								align : 'center'
+
+							},
+							{
+								title : 'End Date',
+								field : 'end',
+								halign : 'center',
+								align : 'center',
+								width : '20%'
+							},
+							{
+								title : 'Handler',
+								field : 'progress',
+								halign : 'center',
+								align : 'center',
+								width : '20%',
+								formatter : function(value, rowData, rowIndex) {
+									return '<span class="fa fa-pencil Button" title="修改" onclick="upd('
+										+ rowData.ROLE_ID
+										+ ')";></span>'
+										+ '&nbsp;<span class="fa fa-trash-o Button del-button" onclick="del('
+										+ rowData.ROLE_ID
+										+ ');" title="删除"></span>'
+										+ '&nbsp;'
+										+ '<span class="fa fa-key Button" onclick="grant('
+										+ rowData.ROLE_ID
+										+ ')" title="设置权限"></span>';					
+
+								}
+							} ] ],
+					onContextMenu : function(e, row) {
+						e.preventDefault();
+						$(this).treegrid('select', row.id);
+						$('#mm').menu('show',{
+							left: e.pageX,
+							top: e.pageY
+						});
+					}
+				});
+			}
+			// 新增一行
+			var idIndex = 100;
+			function append() {
+				idIndex++;
+				var d1 = new Date();
+				var d2 = new Date();
+				d2.setMonth(d2.getMonth()+1);
+				var node = $('#tg').treegrid('getSelected');
+				$('#tg').treegrid('append',{
+					parent: node.id,
+					data: [{
+						id: idIndex,
+						name: 'New Task'+idIndex,
+						persons: parseInt(Math.random()*10),
+						begin: $.fn.datebox.defaults.formatter(d1),
+						end: $.fn.datebox.defaults.formatter(d2),
+						progress: parseInt(Math.random()*100)
+					}]
+				})
+			}
+			// 删除
+			function removeIt(){
+				var node = $('#tg').treegrid('getSelected');
+				if (node){
+					$('#tg').treegrid('remove', node.id);
+				}
+			}
+			// 展开
+			function expand() {
+				var node = $('#tg').treegrid('getSelected');
+				if (node){
+					$('#tg').treegrid('expand', node.id);
+				}
+			}
+			// 收起
+			function collapse() {
+				var node = $('#tg').treegrid('getSelected');
+				if (node){
+					$('#tg').treegrid('collapse', node.id);
+				}
+			}
+
+
+
+			// 新增新增
+			// function add(value) {
+				// 	if (value == 1) {
+				// 		value = "";
+				// 	} else {
+				// 		value = proRow.ROLE_ID;
+				// 	}
+				// 	var formObj = $('#dd1').find("#J_Form");
+				// 	$.ajax({
+				// 		url: util.warpRandom(webpath + "role/toAdd?id="+ value),
+				// 		type: 'POST',
+				// 		success: function(data){
+				// 			$('#dd1').html(data);
+				// 			$("#dd1").find('#parentName').combotree({
+				// 				// 获取数据URL
+				// 				url : util.warpRandom(webpath + 'role/treeData?json'),
+				// 				required : true,
+				// 				// 选择树节点触发事件
+				// 				onChange : function(node) {
+				// 					$("#dd1").find('#parentId').val(
+				// 							$("#dd1").find('#parentName').combotree("getValue"));
+				// 				}
+				// 			});
+				// 		}
+				// 	})
+				// 	layer.open({
+				// 		type: 1,
+				// 		title:'<i class="iconfont">&#xe641;</i>&nbsp;添加角色',
+				// 		area: ['400px', '360px'],
+				// 		content: $('#dd1'),
+				// 		zIndex: 999,
+				// 		scrollbar: false,
+				// 		btn: ['确定','取消'],
+				// 		btn1: function(index, layero){
+				// 			$('#dd1').find("#J_Form").form('submit',{
+				// 				url : util.warpRandom(webpath + "role/add"),
+				// 				type: 'POST',
+				// 				onSubmit: function(){
+				//   					var formObj = $('#dd1').find("#J_Form");
+				//   					if(!form.isValidator(formObj)){
+				//   						//layer.msg('输入数据不完整！', {time: 1000, icon:2});
+				//   						return false;
+				// 					}
+				// 					return form.isValidator(formObj);	// 返回false将停止form提交 
+				// 				},
+				// 				success : function(data) {
+				// 					if(data == 1){
+				// 						layer.msg('添加成功！', {time: 1000, icon:1});
+				// 						layer.close(index);
+				// 						$("#dg").treegrid('load');
+				// 					}
+				// 				}
+				// 			});
+				// 		},
+				// 		btn2: function(index, layero){
+				// 			layer.close(index);
+				// 		}
+				// 	})
+				
+			// }
+			// 
+			// 
+			// 修改修改
+			// function upd(value) {
+				// 	if (!value) {
+				// 		value = proRow.id;
+				// 	}
+				// 	var formObj = $('#dd2').find("#J_Form");
+				// 	$.ajax({
+				// 		url: util.warpRandom(webpath + "role/toUpdate?id="+ value),
+				// 		type: 'POST',
+				// 		success: function(data){
+				// 			$('#dd2').html(data);
+				// 			$("#dd2").find('#parentName').combotree({
+				// 				// 获取数据URL
+				// 				url : '/role/treeData?json',
+				// 				// 选择树节点触发事件
+				// 				onChange : function(node) {
+				// 					$("#dd2").find('#parentId').val(
+				// 							$("#dd2").find('#parentName').combotree("getValue"));
+				// 				}
+				// 			});
+				// 		}
+				// 	})
+				// 	layer.open({
+				// 		type: 1,
+				// 		title:'<i class="iconfont">&#xe633;</i>&nbsp;修改角色',
+				// 		area: ['400px', '300px'],
+				// 		content: $('#dd2'),
+				// 		zIndex: 999,
+				// 		scrollbar: false,
+				// 		btn: ['确定','取消'],
+				// 		btn1: function(index, layero){
+				// 			$('#dd2').find("#J_Form").form('submit',{
+				// 				url : util.warpRandom(webpath + "role/update"),
+				// 				type: 'POST',
+				// 				onSubmit: function(){
+				//   					var formObj = $('#dd2').find("#J_Form");
+				//   					if(!form.isValidator(formObj)){
+				//   						//layer.msg('输入数据不完整！', {time: 1000, icon:2});
+				//   						return false;
+				// 					}
+				// 					return form.isValidator(formObj);	// 返回false将停止form提交 
+				// 				},
+				// 				success : function(data) {
+				// 					if(data == 1){
+				// 						layer.msg('修改成功！', {time: 1000, icon:1});
+				// 						layer.close(index);
+				// 						$('#dg').treegrid("reload");
+				// 					}
+				// 				}
+				// 			});			
+				// 		},
+				// 		btn2: function(index, layero){
+				// 			layer.close(index);
+				// 		}
+				// 	})
+				// }
+
+
+				// 删除删除
+				// function del(value) {
+				// 	if (!value) {
+				// 		value = proRow.id;
+				// 	}
+				// 	layer.confirm('删除该角色？（删除后不可恢复）', {
+				//           icon: 3,
+				//           btn: ['是','否'] //按钮
+				//     }, function(index, layero){
+				//     	$.ajax({//初始化组织机构树
+				//     		"url":util.warpRandom(webpath + "role/delete"),
+				//     		"type":"POST",
+				//     		dataType:"json",
+				//     		data : "id=" + value,
+				//     		success:function(data){
+				//     			if(data==1){
+				//     			layer.msg('删除成功！', {time: 1000, icon:1});
+				//     			layer.close(index);
+				//     			$("#dg").treegrid('load');
+				//     			}else{
+				//     				layer.msg('删除失败，请确认该节点或子节点是否正在赋权给用户~', {time: 1000, icon:2});
+				//                 }
+				//     		},
+				//             error:function(data){
+				//             	layer.msg('服务器异常~', {time: 1000, icon:1});
+				//             }
+				//     	});
+				//    });
+				// }
+				// 
+				// 
+				// 查询查询
+				// function search() {
+				// 	var name = $("#rolename").val();
+				// 	$('#dg').treegrid("load", {
+				// 		roleName : name
+				// 	});
+				// }
+    	</script>
+    </body>
+</html>
